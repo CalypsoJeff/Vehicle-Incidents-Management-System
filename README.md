@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vehicle Incidents Management Application
 
-## Getting Started
+A full-stack system for tracking, reporting, and managing vehicle incidents inside a fleet management platform.
 
-First, run the development server:
+---
 
-```bash
+## Features
+- **Create & edit incident reports**
+- **Status/severity/type workflows**
+- **Comments & activity updates**
+- **Image & document uploads (Cloudinary)**
+- **Filtering, search & pagination**
+- **Analytics dashboard (status, severity, trends)**
+- **React Query caching & optimistic UX**
+- **Responsive Design**: Optimized for various devices with a responsive user interface.
+## Tech Stack
+**Framework**: Next.js 15 (App Router, TypeScript, Turbopack)
+**API**: Next.js Route Handlers (REST-style)
+**DB / ORM**: PostgreSQL (Neon) + Prisma
+**State / Data**: TanStack Query (React Query)
+**UI**: Tailwind CSS + shadcn/ui + lucide-react
+**Uploads**: Cloudinary (unsigned preset)
+**Deployment**: Vercel
+
+---
+
+## Project Structure
+
+- `app/`
+  - `api/incidents/` – REST-like routes (list, detail, updates)
+  - `fleetmanager/incidents/` – UI pages: list, create, edit, detail, stats
+- `components/`
+  - `ui/` – Reusable UI primitives
+  - `incidents-table.tsx`, `IncidentForm.tsx`, `IncidentDetail.tsx`, `IncidentStats.tsx`, `providers.tsx`
+- `lib/` – `utils.ts`, `api-client.ts`, `query-keys.ts`, `validations/incidents.ts`, `queries/incidents.ts`
+- `prisma/schema.prisma`
+- `public/`
+- `next.config.ts`
+
+
+## Live Demo
+The application is deployed and accessible at:
+**[Deployed URL](https://vehicle-incidents-management-system-nine.vercel.app/fleetmanager/incidents)**
+
+---
+
+## AI-Assisted Development:
+AI tools, including ChatGPT, Claude.AI, and V0 by Vercel, played a crucial role in this project
+
+---
+## Prerequisites
+Node.js installed on your local machine.
+Git installed for version control.
+A PostgreSQL database (e.g., Neon free tier)
+---
+
+## Installation
+Clone the Repository
+Clone the repository and navigate into it:
+
+git clone https://github.com/CalypsoJeff/Vehicle-Incidents-Management-System.git
+cd .\fleet-incidents\
+
+
+Create a .env file and add the necessary environment variables. 
+Example:
+# --- Database (Neon) ---
+
+DATABASE_URL="postgresql://USER:PASSWORD@HOST/db?sslmode=require"
+
+# --- Cloudinary (client-side unsigned uploads) ---
+
+NEXT_PUBLIC_CLOUDINARY_CLOUD="your-cloud-name"         # e.g. dq7s9rmea
+NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="unsigned_preset" # unsigned preset name
+
+# ---Prisma client & database ---
+
+npx prisma generate         # build Prisma Client
+npx prisma db push          # create tables in your DB
+# npx prisma studio        # (optional) open Prisma Studio
+
+# --- Run the dev server ---
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# ---API Endpoints ---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**GET /api/incidents** — list incidents (supports filters & pagination)
 
-## Learn More
+**POST /api/incidents** — create incident
 
-To learn more about Next.js, take a look at the following resources:
+**GET /api/incidents/[id]** — get incident details
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**PUT /api/incidents/[id]** — update incident
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**POST /api/incidents/[id]/updates** — add a comment/update
 
-## Deploy on Vercel
+# ---Frontend Routes ----
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**/fleetmanager/incidents** — table list + filters
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**/fleetmanager/incidents/new** — create form (multi-step)
+
+**/fleetmanager/incidents/[id]** — detail page (attachments, comments, preview)
+
+**/fleetmanager/incidents/stats** — analytics dashboard
+
+
+Contributing
+Contributions are welcome! 
+Feel free to fork the repository and submit a pull request.
