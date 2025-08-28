@@ -1,16 +1,3 @@
-// "use client";
-// import IncidentsTable from "@/components/IncidentsTable";
-// import { useIncidents } from "@/lib/queries/incidents";
-
-// export default function IncidentsListPage() {
-//   const { data, isLoading, error } = useIncidents();
-
-//   if (isLoading) return <p>Loading…</p>;
-//   if (error) return <p>Error loading incidents</p>;
-
-//   return <IncidentsTable incidents={data?.items ?? []} />;
-// }
-
 "use client";
 import IncidentsTable from "@/components/incidents-table";
 import { useIncidents } from "@/lib/queries/incidents";

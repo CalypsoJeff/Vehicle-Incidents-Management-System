@@ -5,8 +5,31 @@ import { Input } from "./ui/Input";
 import { Textarea } from "./ui/TextArea";
 import { FileUpload } from "./ui/FileUpload";
 import { z } from "zod";
-import Image from "next/image";
 import { useCars, useUsers } from "@/lib/queries/incidents";
+import type { Car, User } from "@prisma/client";
+type IncidentFormData = {
+  carId: number | string;
+  reportedById: number | string;
+  title: string;
+  description: string;
+  severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  status: "PENDING" | "IN_PROGRESS" | "RESOLVED" | "CLOSED" | "CANCELLED";
+  type:
+    | "ACCIDENT"
+    | "BREAKDOWN"
+    | "THEFT"
+    | "VANDALISM"
+    | "MAINTENANCE_ISSUE"
+    | "TRAFFIC_VIOLATION"
+    | "FUEL_ISSUE"
+    | "OTHER";
+  occurredAt: string;
+  images: string[];
+  documents: string[];
+  location: string;
+  latitude: number | null;
+  longitude: number | null;
+};
 
 const incidentSchema = z.object({
   title: z.string().min(3, "Title is required"),
@@ -29,16 +52,14 @@ export default function IncidentForm({
   onSubmit,
   initialData,
 }: {
-  onSubmit: (data: any) => Promise<void>;
-  initialData?: any;
+  onSubmit: (data: IncidentFormData) => Promise<void>;
+  initialData?: Partial<IncidentFormData>;
 }) {
   const [step, setStep] = useState(1);
 
   const { data: cars = [], isLoading: loadingCars } = useCars();
   const { data: users = [], isLoading: loadingUsers } = useUsers();
-
-  // Form state
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<IncidentFormData>({
     carId: initialData?.carId ?? "",
     reportedById: initialData?.reportedById ?? "",
     title: initialData?.title ?? "",
@@ -135,7 +156,10 @@ export default function IncidentForm({
                 className="border rounded-lg p-2 w-full"
                 value={form.severity}
                 onChange={(e) =>
-                  setForm((f) => ({ ...f, severity: e.target.value }))
+                  setForm((f) => ({
+                    ...f,
+                    severity: e.target.value as IncidentFormData["severity"],
+                  }))
                 }
               >
                 <option value="LOW">Low</option>
@@ -151,7 +175,10 @@ export default function IncidentForm({
                 className="border rounded-lg p-2 w-full"
                 value={form.status}
                 onChange={(e) =>
-                  setForm((f) => ({ ...f, status: e.target.value }))
+                  setForm((f) => ({
+                    ...f,
+                    status: e.target.value as IncidentFormData["status"],
+                  }))
                 }
               >
                 <option value="PENDING">Pending</option>
@@ -169,7 +196,12 @@ export default function IncidentForm({
               id="type"
               className="border rounded-lg p-2 w-full"
               value={form.type}
-              onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  type: e.target.value as IncidentFormData["type"],
+                }))
+              }
             >
               <option value="ACCIDENT">Accident</option>
               <option value="BREAKDOWN">Breakdown</option>
@@ -197,7 +229,7 @@ export default function IncidentForm({
               setForm((f) => ({ ...f, carId: Number(e.target.value) }))
             }
           >
-            {cars.map((car: any) => (
+            {cars.map((car: Car) => (
               <option key={car.id} value={car.id}>
                 {car.label} ({car.vin})
               </option>
@@ -214,7 +246,7 @@ export default function IncidentForm({
               setForm((f) => ({ ...f, reportedById: Number(e.target.value) }))
             }
           >
-            {users.map((u: any) => (
+            {users.map((u: User) => (
               <option key={u.id} value={u.id}>
                 {u.name} ({u.email})
               </option>

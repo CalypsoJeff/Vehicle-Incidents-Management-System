@@ -1,18 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { User } from "@prisma/client";
 
-// GET /api/users
 export async function GET() {
-  try {
-    const users = await prisma.user.findMany({
-      orderBy: { id: "asc" },
-    });
-    return NextResponse.json(users);
-  } catch (e: any) {
-    console.error("Error fetching users:", e);
-    return NextResponse.json(
-      { error: "Failed to fetch users" },
-      { status: 500 }
-    );
-  }
+  const users: User[] = await prisma.user.findMany({
+    select: { id: true, name: true, email: true },
+  });
+  return NextResponse.json(users);
 }

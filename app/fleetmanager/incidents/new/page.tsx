@@ -1,20 +1,22 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { apiClient } from "@/lib/api-client"; // wrapper around axios/fetch
 import IncidentForm from "@/components/IncidentForm";
+import { useCreateIncident } from "@/lib/queries/incidents";
 
 export default function NewIncidentPage() {
   const router = useRouter();
+  const createIncident = useCreateIncident();
 
-  async function handleCreate(data: any) {
-    try {
-      
-      await apiClient.post("/incidents", data);
-      router.push("/fleetmanager/incidents");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to create incident");
-    }
+  async function handleCreate(data: unknown) {
+    createIncident.mutate(data, {
+      onSuccess: () => {
+        router.push("/fleetmanager/incidents");
+      },
+      onError: (err) => {
+        console.error(err);
+        alert("Failed to create incident");
+      },
+    });
   }
 
   return (

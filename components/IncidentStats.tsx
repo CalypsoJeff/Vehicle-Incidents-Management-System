@@ -17,29 +17,11 @@ import {
   AlertTriangle,
   Clock,
   CheckCircle,
-  XCircle,
-  AlertCircle,
   TrendingUp,
   Activity,
 } from "lucide-react";
-
-// Mock Badge component
-const Badge = ({ children, variant = "default", className = "" }) => {
-  const variants = {
-    default: "bg-gray-100 text-gray-800",
-    danger: "bg-red-100 text-red-800",
-    warning: "bg-yellow-100 text-yellow-800",
-    success: "bg-green-100 text-green-800",
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[variant]} ${className}`}
-    >
-      {children}
-    </span>
-  );
-};
+import type { IncidentStats as StatsType } from "@/lib/queries/incidents";
+import { Badge } from "@/components/ui/Badge";
 
 const COLORS = {
   status: ["#3B82F6", "#F59E0B", "#10B981", "#6B7280"],
@@ -47,7 +29,7 @@ const COLORS = {
   type: ["#8B5CF6", "#06B6D4", "#F59E0B", "#EF4444", "#10B981"],
 };
 
-export default function IncidentStats({ stats }) {
+export default function IncidentStats({ stats }: { stats: StatsType }) {
   if (!stats) {
     return (
       <div className="p-8 text-center text-gray-500 border rounded-xl bg-gradient-to-br from-gray-50 to-gray-100">
@@ -87,29 +69,33 @@ export default function IncidentStats({ stats }) {
     { month: "Jun", incidents: 22, resolved: 21 },
   ];
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "RESOLVED":
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case "CLOSED":
-        return <XCircle className="h-4 w-4 text-gray-500" />;
-      case "IN_PROGRESS":
-        return <Clock className="h-4 w-4 text-blue-500" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
-    }
-  };
+  // const getStatusIcon = (
+  //   status: "RESOLVED" | "CLOSED" | "IN_PROGRESS" | "PENDING"
+  // ) => {
+  //   switch (status) {
+  //     case "RESOLVED":
+  //       return <CheckCircle className="h-4 w-4 text-green-500" />;
+  //     case "CLOSED":
+  //       return <XCircle className="h-4 w-4 text-gray-500" />;
+  //     case "IN_PROGRESS":
+  //       return <Clock className="h-4 w-4 text-blue-500" />;
+  //     default:
+  //       return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+  //   }
+  // };
 
-  const getSeverityIcon = (severity) => {
-    switch (severity) {
-      case "CRITICAL":
-        return <AlertTriangle className="h-4 w-4 text-red-600" />;
-      case "HIGH":
-        return <AlertTriangle className="h-4 w-4 text-orange-500" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-gray-500" />;
-    }
-  };
+  // const getSeverityIcon = (
+  //   severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
+  // ) => {
+  //   switch (severity) {
+  //     case "CRITICAL":
+  //       return <AlertTriangle className="h-4 w-4 text-red-600" />;
+  //     case "HIGH":
+  //       return <AlertTriangle className="h-4 w-4 text-orange-500" />;
+  //     default:
+  //       return <AlertCircle className="h-4 w-4 text-gray-500" />;
+  //   }
+  // };
 
   return (
     <div className="space-y-8 p-6 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
@@ -238,7 +224,7 @@ export default function IncidentStats({ stats }) {
           Type Breakdown
         </h3>
         <div className="space-y-3">
-          {typeData.map((s, index) => (
+          {typeData.map((s) => (
             <div
               key={s.name}
               className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"

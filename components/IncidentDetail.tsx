@@ -5,45 +5,73 @@ import {
   ArrowLeft,
   AlertTriangle,
   Calendar,
-  Car,
-  User,
+  Car as CarIcon,
+  User as UserIcon,
   FileText,
+  Download,
+  Eye,
   Clock,
   CheckCircle,
   XCircle,
   AlertCircle,
   X,
-  Download,
-  Eye,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAddIncidentComment } from "@/lib/queries/incidents";
+import type {
+  Incident,
+  IncidentUpdate,
+  User,
+  Car,
+  CarReading,
+} from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
-export default function IncidentDetail({ incident }: { incident: any }) {
+function toStringArray(v: unknown): string[] {
+  return Array.isArray(v)
+    ? v.filter((x): x is string => typeof x === "string")
+    : [];
+}
+type IncidentWithRelations = Incident & {
+  car?: Car | null;
+  reportedBy?: User | null;
+  carReading?: CarReading | null;
+  updates?: (IncidentUpdate & { user?: User | null })[];
+  images?: unknown; // prisma Json -> unknown here
+  documents?: unknown; // prisma Json -> unknown here
+};
+
+export default function IncidentDetail({
+  incident,
+}: {
+  incident: IncidentWithRelations;
+}) {
   const [preview, setPreview] = useState<string | null>(null);
   const [comment, setComment] = useState("");
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<
+    (IncidentUpdate & { user?: User | null })[]
+  >([]);
+
   const addComment = useAddIncidentComment();
-
   const router = useRouter();
+  const qc = useQueryClient();
+  const images = toStringArray(incident.images);
+  const documents = toStringArray(incident.documents);
 
+  // Escape key closes preview
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") setPreview(null);
     }
-    if (preview) {
-      window.addEventListener("keydown", handleKeyDown);
-    }
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
+    if (preview) window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [preview]);
+
+  // Keep comments in state for rendering
   useEffect(() => {
     if (incident?.updates) {
-      // filter comments only
-      setComments(
-        incident.updates.filter((u: any) => u.updateType === "COMMENT")
-      );
+      setComments(incident.updates.filter((u) => u.updateType === "COMMENT"));
     }
   }, [incident]);
 
@@ -140,20 +168,19 @@ export default function IncidentDetail({ incident }: { incident: any }) {
   // Post a new comment
   const handleAddComment = () => {
     addComment.mutate(
-      { id: incident.id, comment, userId: 1 }, // ⚠️ replace with real userId
+      { id: incident.id.toString(), comment, userId: 1 }, // ✅ id must be string
       {
-        onSuccess: (newComment: any) => {
-          setComments((prev) => [
-            {
-              id: newComment.id,
-              message: newComment.message,
-              createdAt: newComment.createdAt,
-              user: { id: 1, name: "John Doe", email: "john@example.com" }, // fallback
-              updateType: "COMMENT",
-            },
-            ...prev,
-          ]);
+        onSuccess: (newComment: IncidentUpdate & { user?: User | null }) => {
           setComment("");
+          // ✅ update local state for instant feedback
+          setComments((prev) => [
+            ...(prev ?? []),
+            { ...newComment, updateType: "COMMENT" },
+          ]);
+          // ✅ re-fetch incident detail
+          qc.invalidateQueries({
+            queryKey: queryKeys.incidents.detail(incident.id.toString()),
+          });
         },
       }
     );
@@ -161,7 +188,7 @@ export default function IncidentDetail({ incident }: { incident: any }) {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      {/* ✅ Back button at the top */}
+      {/* Back button */}
       <div>
         <button
           onClick={() => router.back()}
@@ -172,6 +199,8 @@ export default function IncidentDetail({ incident }: { incident: any }) {
           Back
         </button>
       </div>
+
+      {/* Main card */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 border border-slate-200">
         <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))]"></div>
         <div className="relative p-8">
@@ -190,7 +219,6 @@ export default function IncidentDetail({ incident }: { incident: any }) {
                   </p>
                 </div>
               </div>
-
               <p className="text-lg text-slate-700 leading-relaxed max-w-2xl">
                 {incident.description}
               </p>
@@ -205,13 +233,10 @@ export default function IncidentDetail({ incident }: { incident: any }) {
                   {statusConfig.label}
                 </span>
               </div>
-
               <div
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border ${severityConfig.bg} ${severityConfig.border} ${severityConfig.color}`}
               >
-                <div
-                  className={`w-2 h-2 rounded-full ${severityConfig.dot}`}
-                ></div>
+                <div className={`w-2 h-2 rounded-full ${severityConfig.dot}`} />
                 <span className="font-semibold text-sm">
                   {incident.severity} Priority
                 </span>
@@ -220,88 +245,66 @@ export default function IncidentDetail({ incident }: { incident: any }) {
           </div>
         </div>
       </div>
+
+      {/* Car, Reporter, Type */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50 border border-blue-100">
-              <Calendar className="w-5 h-5 text-blue-600" />
-            </div>
-            <h3 className="font-semibold text-slate-900">Occurred</h3>
-          </div>
-          <p className="text-slate-600 text-sm">
-            {new Date(incident.occurredAt).toLocaleDateString("en-US", {
-              weekday: "short",
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+        <div className="bg-white rounded-xl border p-6">
+          <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-blue-600" /> Occurred
+          </h3>
+          <p className="text-slate-600 text-sm mt-2">
+            {new Date(incident.occurredAt).toLocaleString()}
           </p>
         </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-50 border border-green-100">
-              <Car className="w-5 h-5 text-green-600" />
-            </div>
-            <h3 className="font-semibold text-slate-900">Vehicle</h3>
-          </div>
-          <p className="text-slate-600 text-sm">
+        <div className="bg-white rounded-xl border p-6">
+          <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+            <CarIcon className="w-5 h-5 text-green-600" /> Vehicle
+          </h3>
+          <p className="text-slate-600 text-sm mt-2">
             {incident.car?.label || "Not specified"}
           </p>
         </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-50 border border-purple-100">
-              <User className="w-5 h-5 text-purple-600" />
-            </div>
-            <h3 className="font-semibold text-slate-900">Reported By</h3>
-          </div>
-          <p className="text-slate-600 text-sm">
+        <div className="bg-white rounded-xl border p-6">
+          <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+            <UserIcon className="w-5 h-5 text-purple-600" /> Reported By
+          </h3>
+          <p className="text-slate-600 text-sm mt-2">
             {incident.reportedBy?.name || "Unknown"}
           </p>
         </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-50 border border-orange-100">
-              <FileText className="w-5 h-5 text-orange-600" />
-            </div>
-            <h3 className="font-semibold text-slate-900">Type</h3>
-          </div>
-          <p className="text-slate-600 text-sm">{incident.type || "General"}</p>
+        <div className="bg-white rounded-xl border p-6">
+          <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-orange-600" /> Type
+          </h3>
+          <p className="text-slate-600 text-sm mt-2">{incident.type}</p>
         </div>
       </div>
+
+      {/* Vehicle Reading */}
       {incident.carReading && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">
-            Vehicle Reading
-          </h3>
-          <div className="bg-slate-50 rounded-lg p-4">
-            <div className="flex items-center gap-2">
-              <span className="text-slate-600">Odometer:</span>
-              <span className="font-semibold text-slate-900">
-                {incident.carReading.odometer.toLocaleString()} km
-              </span>
-            </div>
-          </div>
+        <div className="bg-white rounded-xl border p-6">
+          <h3 className="text-lg font-semibold mb-2">Vehicle Reading</h3>
+          <p className="text-slate-700">
+            Odometer:{" "}
+            <strong>{incident.carReading.odometer.toLocaleString()} km</strong>
+          </p>
         </div>
       )}
-      {(incident.images?.length > 0 || incident.documents?.length > 0) && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
+
+      {/* Attachments */}
+      {(images.length > 0 || documents.length > 0) && (
+        <div className="bg-white rounded-xl border p-6">
           <h3 className="text-lg font-semibold text-slate-900 mb-6">
             Attachments
           </h3>
 
-          {incident.images?.length > 0 && (
+          {images.length > 0 && (
             <div className="mb-6">
               <h4 className="text-sm font-medium text-slate-700 mb-3">
                 Images
               </h4>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {incident.images.map((img: string, idx: number) => (
+                {images.map((img, idx) => (
                   <div
                     key={idx}
                     className="group relative aspect-square cursor-pointer rounded-lg overflow-hidden border border-slate-200 hover:border-slate-300 transition-colors"
@@ -322,13 +325,13 @@ export default function IncidentDetail({ incident }: { incident: any }) {
             </div>
           )}
 
-          {incident.documents?.length > 0 && (
+          {documents.length > 0 && (
             <div>
               <h4 className="text-sm font-medium text-slate-700 mb-3">
                 Documents
               </h4>
               <div className="space-y-2">
-                {incident.documents.map((doc: string, idx: number) => (
+                {documents.map((doc, idx) => (
                   <a
                     key={idx}
                     href={doc}
@@ -350,96 +353,59 @@ export default function IncidentDetail({ incident }: { incident: any }) {
           )}
         </div>
       )}
-      {incident.resolutionNotes && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">
-            Resolution Notes
-          </h3>
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <p className="text-slate-700 leading-relaxed whitespace-pre-line">
-              {incident.resolutionNotes}
-            </p>
-          </div>
-        </div>
-      )}
-      {/* Timeline */}
-      {incident.updates?.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-6">
-            Activity Timeline and Comments
-          </h3>
-          <div className="space-y-6">
-            {incident.updates.map((update: any, idx: number) => (
-              <div key={update.id} className="relative flex gap-4">
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 border-2 border-blue-200">
-                    <div className="w-2 h-2 rounded-full bg-blue-600"></div>
-                  </div>
-                  {idx < incident.updates.length - 1 && (
-                    <div className="w-px h-12 bg-slate-200 mt-2"></div>
-                  )}
-                </div>
-                <div className="flex-1 pb-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-semibold text-slate-900">
-                      {update.user?.name || "System"}
-                    </span>
-                    <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
-                      {new Date(update.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </div>
-                  <p className="text-slate-700 leading-relaxed">
-                    {update.message}
-                  </p>
-                </div>
+
+      {/* Comments Section */}
+      <div className="bg-white rounded-xl border p-6">
+        <h3 className="text-lg font-semibold mb-4">Comments</h3>
+        <div className="space-y-3 mb-4">
+          {comments.length > 0 ? (
+            comments.map((c) => (
+              <div key={c.id} className="p-2 border rounded">
+                <p className="text-sm text-gray-700">{c.message}</p>
+                <span className="text-xs text-gray-500">
+                  {c.user?.name ?? "User"} ·{" "}
+                  {new Date(c.createdAt).toLocaleString()}
+                </span>
               </div>
-            ))}
-          </div>
+            ))
+          ) : (
+            <p className="text-sm text-gray-500">No comments yet.</p>
+          )}
         </div>
-      )}
-      Comments Section
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
-        {/* New Comment */}
-        <div className="mt-6 flex gap-3">
+        <div className="flex gap-2">
           <input
             type="text"
-            placeholder="Write your comment..."
+            placeholder="Write a comment..."
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            className="flex-1 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="flex-1 border rounded px-2 py-1 text-sm"
           />
           <button
-            type="button"
-            disabled={addComment.isPending || !comment.trim()}
             onClick={handleAddComment}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            disabled={addComment.isPending || !comment.trim()}
+            className="px-3 py-1 bg-blue-600 text-white rounded"
           >
-            {addComment.isPending ? "Posting..." : "Post"}
+            {addComment.isPending ? "Posting…" : "Post"}
           </button>
         </div>
       </div>
+
+      {/* Image Preview */}
       {preview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
           <div className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200">
+            <div className="flex items-center justify-between p-4 border-b">
               <h3 className="font-semibold text-slate-900">Image Preview</h3>
               <button
-                type="button"
                 onClick={() => setPreview(null)}
-                aria-label="Close preview"
-                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-slate-100 transition-colors"
+                className="w-8 h-8 rounded hover:bg-slate-100 flex items-center justify-center"
               >
                 <X className="w-5 h-5 text-slate-600" />
               </button>
             </div>
             <div className="relative w-full h-[600px] bg-slate-50">
               <Image
-                src={preview || "/placeholder.svg"}
+                src={preview}
                 alt="Preview"
                 fill
                 className="object-contain"

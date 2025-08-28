@@ -7,7 +7,7 @@ import IncidentForm from "@/components/IncidentForm";
 export default function EditIncidentPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const [incident, setIncident] = useState<any>(null);
+  const [incident, setIncident] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,7 +18,7 @@ export default function EditIncidentPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  async function handleUpdate(updated: any) {
+  async function handleUpdate(updated: unknown) {
     try {
       await axios.put(`/api/incidents/${id}`, updated);
       router.push(`/fleetmanager/incidents/${id}`);

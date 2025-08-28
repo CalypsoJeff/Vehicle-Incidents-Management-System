@@ -1,6 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../query-keys";
 import { apiClient } from "../api-client";
+import type { Incident, IncidentUpdate, User, Car } from "@prisma/client";
+
+export type IncidentWithRelations = Incident & {
+  car?: Car | null;
+  reportedBy?: User | null;
+  updates?: (IncidentUpdate & { user?: User | null })[];
+};
 
 export interface IncidentFilters {
   status?: string;
@@ -15,37 +22,50 @@ export interface IncidentFilters {
 }
 
 export interface IncidentStats {
-  total: number;
-  byStatus: Record<string, number>;
-  bySeverity: Record<string, number>;
-  avgResolutionTime: number;
-  openIncidents: number;
+  byStatus: { status: string; _count: { _all: number } }[];
+  bySeverity: { severity: string; _count: { _all: number } }[];
+  byType: { type: string; _count: { _all: number } }[];
+  resolutionHoursAvg: number;
+  averageResponseTime: number;
+}
+
+export interface IncidentsListResponse {
+  items: IncidentWithRelations[];
 }
 
 // Queries
-export const fetchIncidents = async (filters: IncidentFilters = {}) => {
+export const fetchIncidents = async (
+  filters: IncidentFilters = {}
+): Promise<IncidentsListResponse> => {
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
       params.append(key, String(value));
     }
   });
+
   const endpoint = params.toString() ? `/incidents?${params}` : "/incidents";
-  return apiClient.get(endpoint);
+  return apiClient.get<IncidentsListResponse>(endpoint); // ✅ fix here
 };
 
-export const fetchIncidentDetail = async (id: string) =>
-  apiClient.get(`/incidents/${id}`);
+export const fetchIncidentDetail = async (id: string) => {
+  return apiClient.get<IncidentWithRelations>(`/incidents/${id}`);
+};
 
-export const fetchIncidentStats = async () =>
-  apiClient.get<IncidentStats>("/incidents/stats");
+export const fetchIncidentStats = async (): Promise<IncidentStats> => {
+  return apiClient.get<IncidentStats>("/incidents/stats");
+};
 
-export const fetchCars = async () => apiClient.get("/incidents/cars");
-export const fetchUsers = async () => apiClient.get("/incidents/users");
+export const fetchCars = async (): Promise<Car[]> => {
+  return apiClient.get("/incidents/cars");
+};
+
+export const fetchUsers = async (): Promise<User[]> =>
+  apiClient.get("/incidents/users");
 
 // React Query Hooks
 export const useIncidents = (filters: IncidentFilters = {}) =>
-  useQuery({
+  useQuery<IncidentsListResponse>({
     queryKey: queryKeys.incidents.list(filters),
     queryFn: () => fetchIncidents(filters),
     staleTime: 2 * 60 * 1000,
@@ -53,21 +73,22 @@ export const useIncidents = (filters: IncidentFilters = {}) =>
   });
 
 export const useIncidentDetail = (id: string) =>
-  useQuery({
+  useQuery<IncidentWithRelations>({
     queryKey: queryKeys.incidents.detail(id),
     queryFn: () => fetchIncidentDetail(id),
     enabled: !!id,
     staleTime: 60 * 1000,
   });
 
-export const useIncidentStats = () =>
-  useQuery({
+export const useIncidentStats = () => {
+  return useQuery<IncidentStats>({
     queryKey: queryKeys.incidents.stats(),
     queryFn: fetchIncidentStats,
     staleTime: 5 * 60 * 1000,
   });
+};
 export const useCars = () =>
-  useQuery({
+  useQuery<Car[]>({
     queryKey: queryKeys.cars.list(),
     queryFn: fetchCars,
     staleTime: 10 * 60 * 1000,
@@ -84,7 +105,7 @@ export const useUsers = () =>
 export const useCreateIncident = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => apiClient.post("/incidents", data),
+    mutationFn: (data: unknown) => apiClient.post("/incidents", data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.incidents.lists() });
       qc.invalidateQueries({ queryKey: queryKeys.incidents.stats() });
@@ -95,7 +116,7 @@ export const useCreateIncident = () => {
 export const useUpdateIncident = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) =>
+    mutationFn: ({ id, data }: { id: string; data: unknown }) =>
       apiClient.put(`/incidents/${id}`, data),
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: queryKeys.incidents.lists() });
@@ -105,10 +126,16 @@ export const useUpdateIncident = () => {
   });
 };
 
+type CommentResponse = IncidentUpdate & { user?: User | null };
+
 export const useAddIncidentComment = () => {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, comment, userId }: { id: string; comment: string, userId: number }) =>
+  return useMutation<
+    CommentResponse,
+    Error,
+    { id: string; comment: string; userId: number }
+  >({
+    mutationFn: ({ id, comment, userId }) =>
       apiClient.post(`/incidents/${id}/updates`, {
         message: comment,
         updateType: "COMMENT",

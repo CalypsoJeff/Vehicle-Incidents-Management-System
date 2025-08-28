@@ -1,102 +1,7 @@
-// "use client";
-// import Link from "next/link";
-// import { ReactNode, useState } from "react";
-// import { cn } from "@/lib/utils";
-// import MenuIcon from "@mui/icons-material/Menu";
-// import {
-//   Drawer,
-//   IconButton,
-//   List,
-//   ListItem,
-//   ListItemText,
-// } from "@mui/material";
-
-// export default function FleetManagerLayout({
-//   children,
-// }: {
-//   children: ReactNode;
-// }) {
-//   const [mobileOpen, setMobileOpen] = useState(false);
-
-//   const toggleDrawer = () => setMobileOpen(!mobileOpen);
-
-//   const sidebarContent = (
-//     <nav className="flex flex-col h-full bg-white">
-//       <div className="h-16 flex items-center px-6 font-bold text-lg border-b">
-//         🚗 Fleet Manager
-//       </div>
-//       <div className="flex-1 p-4 space-y-2">
-//         <NavLink href="/fleetmanager/incidents">📋 Incidents</NavLink>
-//         <NavLink href="/fleetmanager/incidents/new">➕ New Incident</NavLink>
-//         <NavLink href="/fleetmanager/incidents/stats">📊 Analytics</NavLink>
-//       </div>
-//     </nav>
-//   );
-
-//   return (
-//     <div className="min-h-dvh flex bg-gray-50 text-gray-900">
-//       {/* Sidebar (desktop) */}
-//       <aside className="w-64 hidden md:flex flex-col border-r">
-//         {sidebarContent}
-//       </aside>
-
-//       {/* Sidebar (mobile) */}
-//       <Drawer anchor="left" open={mobileOpen} onClose={toggleDrawer}>
-//         <div className="w-64">{sidebarContent}</div>
-//       </Drawer>
-
-//       {/* Main Content */}
-//       <div className="flex-1 flex flex-col">
-//         {/* Topbar */}
-//         <header className="h-16 flex items-center justify-between border-b bg-white px-4 md:px-6">
-//           <div className="flex items-center gap-2">
-//             {/* Hamburger (mobile only) */}
-//             <IconButton
-//               onClick={toggleDrawer}
-//               className="md:hidden"
-//               size="large"
-//             >
-//               <MenuIcon />
-//             </IconButton>
-//             <span className="font-semibold">Dashboard</span>
-//           </div>
-//           <div className="flex items-center gap-4">
-//             <input
-//               type="text"
-//               placeholder="Search..."
-//               className="hidden md:block border rounded-lg px-3 py-1 text-sm"
-//             />
-//           </div>
-//         </header>
-
-//         {/* Page content */}
-//         <main className="flex-1 p-4 md:p-6 overflow-y-auto">{children}</main>
-//       </div>
-//     </div>
-//   );
-// }
-
-// function NavLink({ href, children }: { href: string; children: ReactNode }) {
-//   return (
-//     <Link
-//       href={href}
-//       className={cn(
-//         "block rounded-lg px-3 py-2 text-sm font-medium hover:bg-blue-50 hover:text-blue-700 transition-colors"
-//       )}
-//     >
-//       {children}
-//     </Link>
-//   );
-// }
-
-
-
-
-
-"use client"
-import Link from "next/link"
-import { type ReactNode, useState } from "react"
-import { cn } from "@/lib/utils"
+"use client";
+import Link from "next/link";
+import { type ReactNode, useState } from "react";
+import { cn } from "@/lib/utils";
 import {
   Menu,
   X,
@@ -109,16 +14,16 @@ import {
   BarChart3,
   Shield,
   AlertTriangle,
-} from "lucide-react"
+} from "lucide-react";
 
 export default function FleetManagerLayout({
   children,
 }: {
-  children: ReactNode
+  children: ReactNode;
 }) {
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const toggleDrawer = () => setMobileOpen(!mobileOpen)
+  const toggleDrawer = () => setMobileOpen(!mobileOpen);
 
   const sidebarContent = (
     <nav className="flex flex-col h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
@@ -207,7 +112,7 @@ export default function FleetManagerLayout({
         </div>
       </div>
     </nav>
-  )
+  );
 
   return (
     <div className="min-h-dvh flex bg-gradient-to-br from-slate-50 to-slate-100 text-slate-900">
@@ -240,7 +145,11 @@ export default function FleetManagerLayout({
               className="md:hidden p-2.5 rounded-xl hover:bg-slate-100 transition-all duration-200 border border-slate-200"
               aria-label="Toggle navigation menu"
             >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {mobileOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
             </button>
 
             <div>
@@ -264,12 +173,20 @@ export default function FleetManagerLayout({
               />
             </div>
 
-            <button className="relative p-3 rounded-xl hover:bg-slate-100 transition-all duration-200 border border-slate-200">
+            <button
+              type="button"
+              title="Notifications"
+              className="relative p-3 rounded-xl hover:bg-slate-100 transition-all duration-200 border border-slate-200"
+            >
               <Bell className="w-5 h-5 text-slate-600" />
               <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
 
-            <button className="p-3 rounded-xl hover:bg-slate-100 transition-all duration-200 border border-slate-200">
+            <button
+              type="button"
+              title="User Profile"
+              className="p-3 rounded-xl hover:bg-slate-100 transition-all duration-200 border border-slate-200"
+            >
               <User className="w-5 h-5 text-slate-600" />
             </button>
           </div>
@@ -281,7 +198,7 @@ export default function FleetManagerLayout({
         </main>
       </div>
     </div>
-  )
+  );
 }
 
 function NavLink({
@@ -291,11 +208,11 @@ function NavLink({
   badge,
   highlight = false,
 }: {
-  href: string
-  children: ReactNode
-  icon?: ReactNode
-  badge?: string
-  highlight?: boolean
+  href: string;
+  children: ReactNode;
+  icon?: ReactNode;
+  badge?: string;
+  highlight?: boolean;
 }) {
   return (
     <Link
@@ -324,5 +241,5 @@ function NavLink({
         </span>
       )}
     </Link>
-  )
+  );
 }

@@ -1,7 +1,7 @@
 export const queryKeys = {
   incidents: {
     lists: () => ["incidents", "list"],
-    list: (filters: any) => ["incidents", "list", filters],
+    list: (filters: unknown) => ["incidents", "list", filters],
     detail: (id: string | number) => ["incidents", "detail", id],
     stats: () => ["incidents", "stats"],
   },

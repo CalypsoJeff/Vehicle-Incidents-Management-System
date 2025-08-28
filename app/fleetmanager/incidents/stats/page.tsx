@@ -1,22 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/api-client";
 import IncidentStats from "@/components/IncidentStats";
+import { useIncidentStats } from "@/lib/queries/incidents";
 
 export default function IncidentsStatsPage() {
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: stats, isLoading, isError } = useIncidentStats();
 
-  useEffect(() => {
-    apiClient
-      .get("/incidents/stats")
-      .then(setStats)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) return <div className="p-6">Loading…</div>;
-  if (!stats)
+  if (isLoading) return <div className="p-6">Loading…</div>;
+  if (isError || !stats)
     return <div className="p-6 text-red-600">Failed to load stats.</div>;
 
   return (

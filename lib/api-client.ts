@@ -9,19 +9,19 @@ export const api = axios.create({
 
 // Helper methods (optional, so you can swap easily)
 export const apiClient = {
-  get: async <T = any>(url: string) => {
+  get: async <T = unknown>(url: string) => {
     const res = await api.get<T>(url);
     return res.data;
   },
-  post: async <T = any>(url: string, data: any) => {
+  post: async <T = unknown>(url: string, data: unknown) => {
     const res = await api.post<T>(url, data);
     return res.data;
   },
-  put: async <T = any>(url: string, data: any) => {
+  put: async <T = unknown>(url: string, data: unknown) => {
     const res = await api.put<T>(url, data);
     return res.data;
   },
-  delete: async <T = any>(url: string) => {
+  delete: async <T = unknown>(url: string) => {
     const res = await api.delete<T>(url);
     return res.data;
   },
