@@ -6,7 +6,7 @@ import { Textarea } from "./ui/TextArea";
 import { FileUpload } from "./ui/FileUpload";
 import { z } from "zod";
 import Image from "next/image";
-import { useCars, useUsers } from "@/lib/queries/incidents"; 
+import { useCars, useUsers } from "@/lib/queries/incidents";
 
 const incidentSchema = z.object({
   title: z.string().min(3, "Title is required"),
