@@ -229,6 +229,7 @@ export default function IncidentForm({
               setForm((f) => ({ ...f, carId: Number(e.target.value) }))
             }
           >
+            <option value="">Select Vehicle</option>
             {cars.map((car: Car) => (
               <option key={car.id} value={car.id}>
                 {car.label} ({car.vin})
@@ -246,6 +247,7 @@ export default function IncidentForm({
               setForm((f) => ({ ...f, reportedById: Number(e.target.value) }))
             }
           >
+            <option value="">Select Reporter</option>
             {users.map((u: User) => (
               <option key={u.id} value={u.id}>
                 {u.name} ({u.email})
