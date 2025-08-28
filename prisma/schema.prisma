@@ -1,0 +1,162 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ================== ENUMS ==================
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+
+  @@map("incident_severities")
+}
+
+enum IncidentStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+  CANCELLED
+
+  @@map("incident_statuses")
+}
+
+enum IncidentType {
+  ACCIDENT
+  BREAKDOWN
+  THEFT
+  VANDALISM
+  MAINTENANCE_ISSUE
+  TRAFFIC_VIOLATION
+  FUEL_ISSUE
+  OTHER
+
+  @@map("incident_types")
+}
+
+enum IncidentUpdateType {
+  STATUS_CHANGE
+  ASSIGNMENT
+  COMMENT
+  COST_UPDATE
+  RESOLUTION
+
+  @@map("incident_update_types")
+}
+
+// ================== MODELS ==================
+model Incident {
+  id           Int  @id @default(autoincrement())
+  carId        Int
+  reportedById Int
+  assignedToId Int?
+
+  // Incident Details
+  title       String
+  description String
+  severity    IncidentSeverity @default(LOW)
+  status      IncidentStatus   @default(PENDING)
+  type        IncidentType
+
+  // Location & Time
+  location   String?
+  latitude   Float?
+  longitude  Float?
+  occurredAt DateTime
+  reportedAt DateTime @default(now())
+
+  // Associated Data
+  carReadingId Int?
+  images       String[]
+  documents    String[]
+
+  // Resolution
+  resolutionNotes String?
+  estimatedCost   Float?
+  actualCost      Float?
+  resolvedAt      DateTime?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  car        Car              @relation(fields: [carId], references: [id])
+  reportedBy User             @relation("IncidentReporter", fields: [reportedById], references: [id])
+  assignedTo User?            @relation("IncidentAssignee", fields: [assignedToId], references: [id])
+  carReading CarReading?      @relation(fields: [carReadingId], references: [id])
+  updates    IncidentUpdate[]
+
+  @@index([carId])
+  @@index([reportedById])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([severity])
+  @@index([occurredAt])
+  @@map("incidents")
+}
+
+model IncidentUpdate {
+  id         Int                @id @default(autoincrement())
+  incidentId Int
+  userId     Int
+  message    String
+  updateType IncidentUpdateType
+  createdAt  DateTime           @default(now())
+
+  incident Incident @relation(fields: [incidentId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@index([incidentId])
+  @@index([userId])
+  @@map("incident_updates")
+}
+
+// ================== REQUIRED SCHEMA UPDATES ==================
+model User {
+  id    Int    @id @default(autoincrement())
+  name  String
+  email String @unique
+
+  // Relations for incidents
+  incidentsReported Incident[]       @relation("IncidentReporter")
+  incidentsAssigned Incident[]       @relation("IncidentAssignee")
+  incidentUpdates   IncidentUpdate[]
+
+  @@map("users")
+}
+
+model Car {
+  id    Int    @id @default(autoincrement())
+  vin   String @unique
+  label String
+
+  // back-relations
+  incidents Incident[] // from Incident.carId -> Car.id
+  readings  CarReading[] // <-- opposite side for CarReading.car
+
+  @@map("cars")
+}
+
+model CarReading {
+  id        Int      @id @default(autoincrement())
+  carId     Int
+  odometer  Int
+  createdAt DateTime @default(now())
+
+  // relation to Car (requires opposite array on Car)
+  car Car @relation(fields: [carId], references: [id])
+
+  // optional back-rel to incidents that reference this reading
+  incidents Incident[]
+
+  @@index([carId])
+  @@map("car_readings")
+}
