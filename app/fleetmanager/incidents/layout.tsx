@@ -85,23 +85,6 @@ export default function FleetManagerLayout({
             </div>
           </div>
         </NavLink>
-
-        {/* Quick Actions */}
-        <div className="pt-6 mt-6 border-t border-slate-700/50">
-          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
-            Quick Actions
-          </div>
-          <div className="space-y-2">
-            <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all duration-200">
-              <AlertTriangle className="w-4 h-4" />
-              Emergency Alert
-            </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all duration-200">
-              <Shield className="w-4 h-4" />
-              Safety Check
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Footer */}

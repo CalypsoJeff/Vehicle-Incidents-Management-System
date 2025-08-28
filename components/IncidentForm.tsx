@@ -102,6 +102,17 @@ export default function IncidentForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    const hasBlob =
+      form.images.some((u) => u.startsWith("blob:")) ||
+      form.documents.some((u) => u.startsWith("blob:"));
+
+    if (hasBlob) {
+      alert(
+        "Some uploads are still local blobs. Please wait for uploads to finish."
+      );
+      return;
+    }
     const parsed = incidentSchema.safeParse(form);
     if (!parsed.success) {
       const errs: Record<string, string> = {};
@@ -276,16 +287,30 @@ export default function IncidentForm({
           <FileUpload
             multiple
             accept="image/*"
+            folder="incidents/images"
             onUploaded={(url) =>
-              setForm((f) => ({ ...f, images: [...f.images, url] }))
+              setForm((f) => ({
+                ...f,
+                images: [
+                  ...f.images.filter((u) => !u.startsWith("blob:")),
+                  url,
+                ],
+              }))
             }
           />
-          {/* Documents */}
+
           <FileUpload
             multiple
             accept="application/pdf,.doc,.docx,.csv"
+            folder="incidents/docs"
             onUploaded={(url) =>
-              setForm((f) => ({ ...f, documents: [...f.documents, url] }))
+              setForm((f) => ({
+                ...f,
+                documents: [
+                  ...f.documents.filter((u) => !u.startsWith("blob:")),
+                  url,
+                ],
+              }))
             }
           />
         </div>
