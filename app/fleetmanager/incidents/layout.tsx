@@ -12,8 +12,6 @@ import {
   FileText,
   Plus,
   BarChart3,
-  Shield,
-  AlertTriangle,
 } from "lucide-react";
 
 export default function FleetManagerLayout({
