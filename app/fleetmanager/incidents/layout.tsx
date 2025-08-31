@@ -145,14 +145,7 @@ export default function FleetManagerLayout({
 
           {/* Right Controls */}
           <div className="flex items-center gap-4">
-            <div className="relative hidden lg:block">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search incidents, vehicles, reports..."
-                className="pl-12 pr-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 w-80 transition-all duration-200"
-              />
-            </div>
+            
 
             <button
               type="button"
